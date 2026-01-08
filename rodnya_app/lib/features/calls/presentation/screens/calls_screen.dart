@@ -60,6 +60,7 @@ class _CallsScreenState extends State<CallsScreen> {
 
       final apiClient = ApiClient();
       final response = await apiClient.get('/calls/history');
+      print('CALLS RESPONSE: ${response.data}');
       
       if (response.data['success'] == true && response.data['data'] != null) {
         final calls = response.data['data'] as List<dynamic>;

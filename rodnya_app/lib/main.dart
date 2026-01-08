@@ -25,7 +25,7 @@ import 'features/chats/data/datasources/chat_remote_datasource.dart';
 import 'features/chats/presentation/screens/chats_list_screen.dart';
 import 'features/chats/presentation/screens/chat_screen.dart';
 import 'features/contacts/presentation/screens/contacts_screen.dart';
-import 'features/calls/presentation/screens/calls_history_screen.dart';
+import 'features/calls/presentation/screens/calls_screen.dart';
 import 'features/calls/presentation/screens/call_screen.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/settings/presentation/screens/profile_screen.dart';
@@ -128,7 +128,7 @@ class _RodnyaAppState extends State<RodnyaApp> {
             ),
             GoRoute(
               path: '/calls',
-              builder: (context, state) => const CallsHistoryScreen(),
+              builder: (context, state) => const CallsScreen(),
             ),
             GoRoute(
               path: '/settings',
