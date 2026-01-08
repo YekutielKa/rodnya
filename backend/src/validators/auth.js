@@ -66,7 +66,27 @@ const deviceValidator = [
     .trim()
 ];
 
+
+const loginValidator = [
+  body('phone')
+    .trim()
+    .notEmpty().withMessage('Phone number is required')
+    .matches(phoneRegex).withMessage('Invalid phone number format'),
+  body('deviceId')
+    .trim()
+    .notEmpty().withMessage('Device ID is required'),
+  body('deviceType')
+    .trim()
+    .notEmpty().withMessage('Device type is required')
+    .isIn(['ios', 'android', 'web', 'mobile']).withMessage('Invalid device type'),
+  body('deviceName')
+    .optional()
+    .trim()
+    .isLength({ max: 100 }).withMessage('Device name too long')
+];
+
 module.exports = {
+  loginValidator,
   sendOtpValidator,
   verifyOtpValidator,
   registerValidator,

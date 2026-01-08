@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-
 const authController = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { authLimiter, otpLimiter } = require('../middleware/rateLimiter');
 const {
+  loginValidator,
   sendOtpValidator,
   verifyOtpValidator,
   registerValidator,
@@ -16,7 +16,7 @@ const {
 router.post('/otp/send', otpLimiter, sendOtpValidator, validate, authController.sendOtp);
 router.post('/otp/verify', authLimiter, verifyOtpValidator, validate, authController.verifyOtp);
 router.post('/register', authLimiter, registerValidator, validate, authController.register);
-router.post('/login', authLimiter, registerValidator, validate, authController.login);
+router.post('/login', authLimiter, loginValidator, validate, authController.login);
 router.post('/refresh', refreshTokenValidator, validate, authController.refreshAccessToken);
 
 // Protected routes
