@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rodnya — Семейный мессенджер</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 48px 40px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 24px;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo svg {
+            width: 60px;
+            height: 60px;
+            fill: white;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        
+        .tagline {
+            text-align: center;
+            color: #64748b;
+            font-size: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .features {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .features h2 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .feature {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .feature:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        
+        .feature:first-of-type {
+            padding-top: 0;
+        }
+        
+        .check {
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .check svg {
+            width: 12px;
+            height: 12px;
+            fill: white;
+        }
+        
+        .feature span {
+            color: #334155;
+            font-size: 15px;
+        }
+        
+        .download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 12px;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.5);
+        }
+        
+        .download-btn svg {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+        
+        .ios-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 16px 24px;
+            background: #e2e8f0;
+            color: #64748b;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: not-allowed;
+        }
+        
+        .ios-btn span {
+            margin-left: 8px;
+        }
+        
+        .version {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: 24px;
+        }
+        
+        .instructions {
+            background: #fef3c7;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #92400e;
+        }
+        
+        .instructions strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-6 8c0-2.67 5.33-4 6-4s6 1.33 6 4v1H6v-1zm12-8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.5 2.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5zM6 12c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.5 2.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5S5.17 13 6 13s1.5.67 1.5 1.5z"/>
+            </svg>
+        </div>
+        
+        <h1>Rodnya</h1>
+        <p class="tagline">Семейный мессенджер для самых близких</p>
+        
+        <div class="features">
+            <h2>Возможности:</h2>
+            <div class="feature">
+                <div class="check">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <span>Безопасные чаты</span>
+            </div>
+            <div class="feature">
+                <div class="check">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <span>Голосовые и видеозвонки</span>
+            </div>
+            <div class="feature">
+                <div class="check">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <span>Обмен фото и видео</span>
+            </div>
+            <div class="feature">
+                <div class="check">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <span>Голосовые сообщения</span>
+            </div>
+            <div class="feature">
+                <div class="check">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <span>Только для семьи — по приглашениям</span>
+            </div>
+        </div>
+        
+        <a href="https://github.com/YekutielKa/rodnya/releases/latest/download/rodnya.apk" class="download-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 2H6.477C5.1 2 4 3.1 4 4.477v15.046C4 20.9 5.1 22 6.477 22h11.046C18.9 22 20 20.9 20 19.523V4.477C20 3.1 18.9 2 17.523 2zM12 17.5L7 12.5h3V8h4v4.5h3L12 17.5z"/></svg>
+            Скачать для Android
+        </a>
+        
+        <div class="ios-btn">
+            🍎<span>iOS — скоро</span>
+        </div>
+        
+        <p class="version">Версия 1.0.3</p>
+        
+        <div class="instructions">
+            <strong>📱 Как установить:</strong>
+            1. Нажмите «Скачать для Android»<br>
+            2. Откройте скачанный файл<br>
+            3. Разрешите установку из неизвестных источников<br>
+            4. Нажмите «Установить»
+        </div>
+    </div>
+</body>
+</html>
