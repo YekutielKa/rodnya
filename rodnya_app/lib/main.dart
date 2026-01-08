@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'core/api/api_client.dart';
 import 'core/api/socket_service.dart';
+import 'core/api/push_notification_service.dart';
 import 'core/config/theme.dart';
 import 'core/widgets/main_scaffold.dart';
 
@@ -32,7 +33,7 @@ import 'features/calls/presentation/screens/call_screen.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/settings/presentation/screens/profile_screen.dart';
 
-// Background message handler
+// Background message handler - must be top-level function
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -48,24 +49,8 @@ void main() async {
   await Hive.openBox('settings');
 
   // Initialize Firebase
-  try {
-    await Firebase.initializeApp();
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    
-    // Request notification permissions
-    final messaging = FirebaseMessaging.instance;
-    await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-    
-    // Get FCM token
-    final token = await messaging.getToken();
-    print('FCM Token: $token');
-  } catch (e) {
-    print('Firebase init error: $e');
-  }
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   runApp(const RodnyaApp());
 }
@@ -80,19 +65,25 @@ class RodnyaApp extends StatefulWidget {
 class _RodnyaAppState extends State<RodnyaApp> {
   late final ApiClient _apiClient;
   late final SocketService _socketService;
+  late final PushNotificationService _pushService;
   late final AuthRepositoryImpl _authRepository;
   late final ChatRemoteDatasource _chatRemoteDatasource;
   late final AuthLocalDataSource _authLocalDataSource;
+  
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
     _initServices();
+    _initRouter();
   }
 
   Future<void> _initServices() async {
     _apiClient = ApiClient();
     _socketService = SocketService();
+    _pushService = PushNotificationService();
     
     _authLocalDataSource = AuthLocalDataSource();
     await _authLocalDataSource.init();
@@ -105,17 +96,21 @@ class _RodnyaAppState extends State<RodnyaApp> {
     );
     
     _chatRemoteDatasource = ChatRemoteDatasource(_apiClient.dio);
+    
+    // Initialize push notifications
+    await _pushService.init();
+    
+    // Handle notification tap - navigate to chat
+    _pushService.onNotificationTap = (chatId) {
+      if (chatId != null) {
+        _router.push('/chat/$chatId');
+      }
+    };
   }
 
-  @override
-  void dispose() {
-    _socketService.disconnect();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final router = GoRouter(
+  void _initRouter() {
+    _router = GoRouter(
+      navigatorKey: _navigatorKey,
       initialLocation: '/splash',
       routes: [
         GoRoute(
@@ -186,7 +181,16 @@ class _RodnyaAppState extends State<RodnyaApp> {
         ),
       ],
     );
+  }
 
+  @override
+  void dispose() {
+    _socketService.disconnect();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
@@ -205,10 +209,19 @@ class _RodnyaAppState extends State<RodnyaApp> {
             // Connect socket when authenticated
             _socketService.connect(state.user.id);
             
-            // Listen for new messages
+            // Listen for new messages via socket
             _socketService.onNewMessage((message) {
               context.read<ChatsBloc>().add(MessageReceived(message));
               context.read<ChatBloc>().add(MessageReceivedInChat(message));
+            });
+            
+            // Register FCM token on backend
+            _pushService.registerTokenOnBackend((token) async {
+              try {
+                await _apiClient.post('/users/fcm-token', data: {'token': token});
+              } catch (e) {
+                print('Error registering FCM token: $e');
+              }
             });
           } else if (state is AuthUnauthenticated) {
             _socketService.disconnect();
@@ -219,7 +232,7 @@ class _RodnyaAppState extends State<RodnyaApp> {
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: ThemeMode.system,
-          routerConfig: router,
+          routerConfig: _router,
           debugShowCheckedModeBanner: false,
           locale: const Locale('ru', 'RU'),
         ),
