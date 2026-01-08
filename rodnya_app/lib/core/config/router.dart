@@ -26,7 +26,7 @@ class AppRoutes {
   static const String chat = '/chat/:chatId';
   static const String contacts = '/contacts';
   static const String calls = '/calls';
-  static const String call = '/call/:callId';
+  static const String call = '/call';
   static const String settings = '/settings';
   static const String profile = '/profile';
 }
@@ -123,10 +123,11 @@ final appRouter = GoRouter(
       path: AppRoutes.call,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
-        final callId = state.pathParameters['callId'] ?? '';
         final extra = state.extra as Map<String, dynamic>? ?? {};
         return CallScreen(
-          callId: callId,
+          recipientId: extra['recipientId'] ?? '',
+          recipientName: extra['recipientName'] ?? 'Неизвестный',
+          recipientAvatar: extra['recipientAvatar'],
           isVideo: extra['isVideo'] ?? false,
           isIncoming: extra['isIncoming'] ?? false,
         );

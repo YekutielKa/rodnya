@@ -205,7 +205,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
     try {
       final chat = await _remoteDatasource.createGroupChat(
         name: event.name,
-        participantIds: event.participantIds,
+        memberIds: event.participantIds,
       );
       add(ChatReceived(chat));
     } catch (e) {

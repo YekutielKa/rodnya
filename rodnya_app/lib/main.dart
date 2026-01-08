@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'core/api/api_client.dart';
 import 'core/api/socket_service.dart';
+import 'core/api/call_service.dart';
 import 'core/config/theme.dart';
 import 'core/widgets/main_scaffold.dart';
 
@@ -27,36 +28,38 @@ import 'features/chats/presentation/screens/chat_screen.dart';
 import 'features/contacts/presentation/screens/contacts_screen.dart';
 import 'features/calls/presentation/screens/calls_screen.dart';
 import 'features/calls/presentation/screens/call_screen.dart';
+import 'features/calls/presentation/bloc/call_bloc.dart';
+import 'features/calls/call_manager.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/settings/presentation/screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive
   await Hive.initFlutter();
   await Hive.openBox('auth');
   await Hive.openBox('settings');
 
-  // Initialize services before running app
   final apiClient = ApiClient();
   final socketService = SocketService();
-  
+  final callService = CallService(socketService);
+
   final authLocalDataSource = AuthLocalDataSource();
   await authLocalDataSource.init();
-  
+
   final authRemoteDataSource = AuthRemoteDataSource(apiClient);
-  
+
   final authRepository = AuthRepositoryImpl(
     remoteDataSource: authRemoteDataSource,
     localDataSource: authLocalDataSource,
   );
-  
+
   final chatRemoteDatasource = ChatRemoteDatasource(apiClient.dio);
 
   runApp(RodnyaApp(
     apiClient: apiClient,
     socketService: socketService,
+    callService: callService,
     authRepository: authRepository,
     chatRemoteDatasource: chatRemoteDatasource,
   ));
@@ -65,6 +68,7 @@ void main() async {
 class RodnyaApp extends StatefulWidget {
   final ApiClient apiClient;
   final SocketService socketService;
+  final CallService callService;
   final AuthRepositoryImpl authRepository;
   final ChatRemoteDatasource chatRemoteDatasource;
 
@@ -72,6 +76,7 @@ class RodnyaApp extends StatefulWidget {
     super.key,
     required this.apiClient,
     required this.socketService,
+    required this.callService,
     required this.authRepository,
     required this.chatRemoteDatasource,
   });
@@ -82,10 +87,19 @@ class RodnyaApp extends StatefulWidget {
 
 class _RodnyaAppState extends State<RodnyaApp> {
   late final GoRouter _router;
+  late final CallBloc _callBloc;
 
   @override
   void initState() {
     super.initState();
+    _callBloc = CallBloc(widget.callService);
+
+    CallManager.instance.initialize(
+      socketService: widget.socketService,
+      callService: widget.callService,
+      callBloc: _callBloc,
+    );
+
     _initRouter();
   }
 
@@ -144,14 +158,18 @@ class _RodnyaAppState extends State<RodnyaApp> {
           },
         ),
         GoRoute(
-          path: '/call/:callId',
+          path: '/call',
           builder: (context, state) {
-            final callId = state.pathParameters['callId'] ?? '';
-            final extra = state.extra as Map<String, dynamic>?;
-            return CallScreen(
-              callId: callId,
-              isVideo: extra?['isVideo'] ?? false,
-              isIncoming: extra?['isIncoming'] ?? false,
+            final extra = state.extra as Map<String, dynamic>? ?? {};
+            return BlocProvider.value(
+              value: _callBloc,
+              child: CallScreen(
+                recipientId: extra['recipientId'] ?? '',
+                recipientName: extra['recipientName'] ?? 'Неизвестный',
+                recipientAvatar: extra['recipientAvatar'],
+                isVideo: extra['isVideo'] ?? false,
+                isIncoming: extra['isIncoming'] ?? false,
+              ),
             );
           },
         ),
@@ -166,6 +184,8 @@ class _RodnyaAppState extends State<RodnyaApp> {
   @override
   void dispose() {
     widget.socketService.disconnect();
+    widget.callService.dispose();
+    _callBloc.close();
     super.dispose();
   }
 
@@ -182,12 +202,15 @@ class _RodnyaAppState extends State<RodnyaApp> {
         BlocProvider<ChatBloc>(
           create: (context) => ChatBloc(widget.chatRemoteDatasource),
         ),
+        BlocProvider<CallBloc>.value(value: _callBloc),
       ],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) async {
           if (state is AuthAuthenticated) {
             await widget.socketService.connect(state.user.id);
-            
+
+            CallManager.instance.setContext(context);
+
             widget.socketService.onNewMessage((message) {
               context.read<ChatsBloc>().add(MessageReceived(message));
               context.read<ChatBloc>().add(ChatMessageReceived(message));

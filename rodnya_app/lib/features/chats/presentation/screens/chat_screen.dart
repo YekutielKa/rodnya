@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../bloc/chat_bloc.dart';
 import '../../data/models/chat_model.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../calls/call_manager.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -122,15 +123,35 @@ class _ChatScreenState extends State<ChatScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.videocam_outlined),
-                onPressed: () {
-                  // TODO: Video call
-                },
+                onPressed: state is ChatLoaded && state.chat.type == ChatType.direct
+                    ? () {
+                        final other = state.chat.getOtherParticipant(currentUserId);
+                        if (other != null) {
+                          CallManager.instance.initiateCall(
+                            recipientId: other.userId,
+                            recipientName: other.name ?? 'Неизвестный',
+                            recipientAvatar: other.avatarUrl,
+                            isVideo: true,
+                          );
+                        }
+                      }
+                    : null,
               ),
               IconButton(
                 icon: const Icon(Icons.call_outlined),
-                onPressed: () {
-                  // TODO: Voice call
-                },
+                onPressed: state is ChatLoaded && state.chat.type == ChatType.direct
+                    ? () {
+                        final other = state.chat.getOtherParticipant(currentUserId);
+                        if (other != null) {
+                          CallManager.instance.initiateCall(
+                            recipientId: other.userId,
+                            recipientName: other.name ?? 'Неизвестный',
+                            recipientAvatar: other.avatarUrl,
+                            isVideo: false,
+                          );
+                        }
+                      }
+                    : null,
               ),
               PopupMenuButton<String>(
                 onSelected: (value) {
