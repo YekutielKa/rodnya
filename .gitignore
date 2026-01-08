@@ -45,3 +45,4 @@ rodnya_app/ios/Flutter/App.framework/
 rodnya_app/android/app/debug/
 rodnya_app/android/app/profile/
 rodnya_app/android/app/release/
+*.apk
