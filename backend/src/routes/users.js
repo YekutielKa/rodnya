@@ -8,6 +8,7 @@ const { validate } = require('../middleware/validate');
 
 router.use(authenticate);
 
+router.get('/', userController.getAllUsers);
 router.get('/me', userController.getMe);
 
 router.patch('/me', [
