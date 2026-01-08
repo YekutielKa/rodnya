@@ -1,7 +1,7 @@
 class AppConfig {
   static const String appName = 'Rodnya';
-  static const String apiBaseUrl = 'https://rodnya-backend-production.up.railway.app/api/v1';
-  static const String wsUrl = 'https://rodnya-backend-production.up.railway.app';
+  static const String apiBaseUrl = 'https://rodnya-production.up.railway.app/api/v1';
+  static const String wsUrl = 'https://rodnya-production.up.railway.app';
   
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);

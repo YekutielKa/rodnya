@@ -1,11 +1,118 @@
 import 'package:equatable/equatable.dart';
 
-// ============================================================================
-// MESSAGE MODEL
-// ============================================================================
-
-enum MessageType { text, image, video, audio, file, voice }
+enum ChatType { direct, group }
+enum MessageType { text, image, video, voice, audio, file }
 enum MessageStatus { sending, sent, delivered, read, failed }
+
+class ChatModel extends Equatable {
+  final String id;
+  final ChatType type;
+  final String? name;
+  final String? description;
+  final String? avatarUrl;
+  final List<ChatMember> participants;
+  final MessageModel? lastMessage;
+  final int unreadCount;
+  final bool isMuted;
+  final bool isPinned;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+
+  const ChatModel({
+    required this.id, required this.type, this.name, this.description, this.avatarUrl,
+    required this.participants, this.lastMessage, this.unreadCount = 0,
+    this.isMuted = false, this.isPinned = false, required this.createdAt, this.updatedAt,
+  });
+
+  factory ChatModel.fromJson(Map<String, dynamic> json) {
+    return ChatModel(
+      id: json['id'] as String,
+      type: json['type'] == 'group' ? ChatType.group : ChatType.direct,
+      name: json['name'] as String?,
+      description: json['description'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
+      participants: (json['participants'] as List<dynamic>?)?.map((e) => ChatMember.fromJson(e)).toList() ?? [],
+      lastMessage: json['last_message'] != null ? MessageModel.fromJson(json['last_message']) : null,
+      unreadCount: json['unread_count'] as int? ?? 0,
+      isMuted: json['is_muted'] as bool? ?? false,
+      isPinned: json['is_pinned'] as bool? ?? false,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id, 'type': type == ChatType.group ? 'group' : 'direct', 'name': name,
+    'description': description, 'avatar_url': avatarUrl,
+    'participants': participants.map((e) => e.toJson()).toList(),
+    'last_message': lastMessage?.toJson(), 'unread_count': unreadCount,
+    'is_muted': isMuted, 'is_pinned': isPinned, 'created_at': createdAt.toIso8601String(),
+    'updated_at': updatedAt?.toIso8601String(),
+  };
+
+  ChatModel copyWith({String? name, String? description, String? avatarUrl, List<ChatMember>? participants,
+    MessageModel? lastMessage, int? unreadCount, bool? isMuted, bool? isPinned}) {
+    return ChatModel(id: id, type: type, name: name ?? this.name, description: description ?? this.description,
+      avatarUrl: avatarUrl ?? this.avatarUrl, participants: participants ?? this.participants,
+      lastMessage: lastMessage ?? this.lastMessage, unreadCount: unreadCount ?? this.unreadCount,
+      isMuted: isMuted ?? this.isMuted, isPinned: isPinned ?? this.isPinned, createdAt: createdAt, updatedAt: updatedAt);
+  }
+
+  String getDisplayName(String currentUserId) {
+    if (type == ChatType.group) return name ?? 'Группа';
+    final other = getOtherParticipant(currentUserId);
+    return other?.name ?? 'Чат';
+  }
+
+  String? getDisplayAvatar(String currentUserId) {
+    if (type == ChatType.group) return avatarUrl;
+    return getOtherParticipant(currentUserId)?.avatarUrl;
+  }
+
+  ChatMember? getOtherParticipant(String currentUserId) {
+    if (type != ChatType.direct) return null;
+    try { return participants.firstWhere((p) => p.userId != currentUserId); }
+    catch (_) { return participants.isNotEmpty ? participants.first : null; }
+  }
+
+  bool isOtherOnline(String currentUserId) => getOtherParticipant(currentUserId)?.isOnline ?? false;
+
+  @override
+  List<Object?> get props => [id, type, name, avatarUrl, participants, lastMessage, unreadCount, isMuted, isPinned];
+}
+
+class ChatMember extends Equatable {
+  final String id;
+  final String chatId;
+  final String userId;
+  final String? name;
+  final String? avatarUrl;
+  final String role;
+  final bool isOnline;
+  final DateTime? lastSeen;
+  final DateTime? joinedAt;
+
+  const ChatMember({required this.id, required this.chatId, required this.userId, this.name, this.avatarUrl,
+    this.role = 'member', this.isOnline = false, this.lastSeen, this.joinedAt});
+
+  factory ChatMember.fromJson(Map<String, dynamic> json) {
+    return ChatMember(
+      id: json['id'] as String? ?? '', chatId: json['chat_id'] as String? ?? '', userId: json['user_id'] as String,
+      name: json['name'] as String?, avatarUrl: json['avatar_url'] as String?, role: json['role'] as String? ?? 'member',
+      isOnline: json['is_online'] as bool? ?? false,
+      lastSeen: json['last_seen'] != null ? DateTime.parse(json['last_seen'] as String) : null,
+      joinedAt: json['joined_at'] != null ? DateTime.parse(json['joined_at'] as String) : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id, 'chat_id': chatId, 'user_id': userId, 'name': name, 'avatar_url': avatarUrl,
+    'role': role, 'is_online': isOnline, 'last_seen': lastSeen?.toIso8601String(), 'joined_at': joinedAt?.toIso8601String(),
+  };
+
+  @override
+  List<Object?> get props => [id, userId, name, isOnline];
+}
 
 class MessageModel extends Equatable {
   final String id;
@@ -19,201 +126,88 @@ class MessageModel extends Equatable {
   final String? thumbnailUrl;
   final String? fileName;
   final int? fileSize;
-  final int? duration; // for audio/video in seconds
+  final int? duration;
   final MessageModel? replyTo;
   final List<String> readBy;
   final MessageStatus status;
   final DateTime createdAt;
   final DateTime? editedAt;
+  final bool isEdited;
   final bool isDeleted;
-  final Map<String, dynamic>? metadata;
 
-  const MessageModel({
-    required this.id,
-    required this.chatId,
-    required this.senderId,
-    this.senderName,
-    this.senderAvatar,
-    this.type = MessageType.text,
-    this.content,
-    this.mediaUrl,
-    this.thumbnailUrl,
-    this.fileName,
-    this.fileSize,
-    this.duration,
-    this.replyTo,
-    this.readBy = const [],
-    this.status = MessageStatus.sent,
-    required this.createdAt,
-    this.editedAt,
-    this.isDeleted = false,
-    this.metadata,
-  });
+  const MessageModel({required this.id, required this.chatId, required this.senderId, this.senderName, this.senderAvatar,
+    required this.type, this.content, this.mediaUrl, this.thumbnailUrl, this.fileName, this.fileSize, this.duration,
+    this.replyTo, this.readBy = const [], this.status = MessageStatus.sent, required this.createdAt,
+    this.editedAt, this.isEdited = false, this.isDeleted = false});
 
   factory MessageModel.fromJson(Map<String, dynamic> json) {
-    // Handle sender as object or separate fields
-    final sender = json['sender'];
-    final senderId = sender?['id'] ?? json['senderId'] ?? json['sender_id'] ?? '';
-    final senderName = sender?['name'] ?? json['senderName'] ?? json['sender_name'];
-    final senderAvatar = sender?['avatarUrl'] ?? sender?['avatar_url'] ?? json['senderAvatar'];
-    
     return MessageModel(
-      id: json['id'] ?? json['_id'] ?? '',
-      chatId: json['chatId'] ?? json['chat_id'] ?? '',
-      senderId: senderId,
-      senderName: senderName,
-      senderAvatar: senderAvatar,
-      type: _parseMessageType(json['type']),
-      content: json['content'],
-      mediaUrl: json['mediaUrl'] ?? json['media_url'],
-      thumbnailUrl: json['thumbnailUrl'] ?? json['thumbnail_url'],
-      fileName: json['fileName'] ?? json['file_name'],
-      fileSize: json['fileSize'] ?? json['file_size'],
-      duration: json['duration'],
-      replyTo: json['replyTo'] != null ? MessageModel.fromJson(json['replyTo']) : null,
-      readBy: List<String>.from(json['readBy'] ?? json['read_by'] ?? []),
-      status: _parseMessageStatus(json['status']),
-      createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
-      editedAt: json['editedAt'] != null || json['edited_at'] != null 
-          ? _parseDateTime(json['editedAt'] ?? json['edited_at'])
-          : null,
-      isDeleted: json['isDeleted'] ?? json['is_deleted'] ?? false,
-      metadata: json['metadata'],
+      id: json['id'] as String, chatId: json['chat_id'] as String, senderId: json['sender_id'] as String,
+      senderName: json['sender_name'] as String?, senderAvatar: json['sender_avatar'] as String?,
+      type: _parseMessageType(json['type'] as String? ?? 'text'), content: json['content'] as String?,
+      mediaUrl: json['media_url'] as String?, thumbnailUrl: json['thumbnail_url'] as String?,
+      fileName: json['file_name'] as String?, fileSize: json['file_size'] as int?, duration: json['duration'] as int?,
+      replyTo: json['reply_to'] != null ? MessageModel.fromJson(json['reply_to']) : null,
+      readBy: (json['read_by'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+      status: _parseMessageStatus(json['status'] as String? ?? 'sent'),
+      createdAt: DateTime.parse(json['created_at'] as String),
+      editedAt: json['edited_at'] != null ? DateTime.parse(json['edited_at'] as String) : null,
+      isEdited: json['is_edited'] as bool? ?? false, isDeleted: json['is_deleted'] as bool? ?? false,
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'chatId': chatId,
-    'senderId': senderId,
-    'senderName': senderName,
-    'senderAvatar': senderAvatar,
-    'type': type.name,
-    'content': content,
-    'mediaUrl': mediaUrl,
-    'thumbnailUrl': thumbnailUrl,
-    'fileName': fileName,
-    'fileSize': fileSize,
-    'duration': duration,
-    'replyTo': replyTo?.toJson(),
-    'readBy': readBy,
-    'status': status.name,
-    'createdAt': createdAt.toIso8601String(),
-    'editedAt': editedAt?.toIso8601String(),
-    'isDeleted': isDeleted,
-    'metadata': metadata,
+    'id': id, 'chat_id': chatId, 'sender_id': senderId, 'sender_name': senderName, 'sender_avatar': senderAvatar,
+    'type': type.name, 'content': content, 'media_url': mediaUrl, 'thumbnail_url': thumbnailUrl,
+    'file_name': fileName, 'file_size': fileSize, 'duration': duration, 'reply_to': replyTo?.toJson(),
+    'read_by': readBy, 'status': status.name, 'created_at': createdAt.toIso8601String(),
+    'edited_at': editedAt?.toIso8601String(), 'is_edited': isEdited, 'is_deleted': isDeleted,
   };
 
-  /// Create optimistic message for immediate UI update
-  factory MessageModel.optimistic({
-    required String tempId,
-    required String chatId,
-    required String senderId,
-    String? senderName,
-    MessageType type = MessageType.text,
-    String? content,
-    String? mediaUrl,
-    MessageModel? replyTo,
-  }) {
-    return MessageModel(
-      id: tempId,
-      chatId: chatId,
-      senderId: senderId,
-      senderName: senderName,
-      type: type,
-      content: content,
-      mediaUrl: mediaUrl,
-      replyTo: replyTo,
-      status: MessageStatus.sending,
-      createdAt: DateTime.now(),
-    );
+  factory MessageModel.optimistic({required String id, required String chatId, required String senderId,
+    required MessageType type, String? content, String? mediaUrl, String? thumbnailUrl, String? fileName,
+    int? fileSize, int? duration, MessageModel? replyTo}) {
+    return MessageModel(id: id, chatId: chatId, senderId: senderId, type: type, content: content,
+      mediaUrl: mediaUrl, thumbnailUrl: thumbnailUrl, fileName: fileName, fileSize: fileSize, duration: duration,
+      replyTo: replyTo, status: MessageStatus.sending, createdAt: DateTime.now());
   }
 
-  MessageModel copyWith({
-    String? id,
-    String? chatId,
-    String? senderId,
-    String? senderName,
-    String? senderAvatar,
-    MessageType? type,
-    String? content,
-    String? mediaUrl,
-    String? thumbnailUrl,
-    String? fileName,
-    int? fileSize,
-    int? duration,
-    MessageModel? replyTo,
-    List<String>? readBy,
-    MessageStatus? status,
-    DateTime? createdAt,
-    DateTime? editedAt,
-    bool? isDeleted,
-    Map<String, dynamic>? metadata,
-  }) {
-    return MessageModel(
-      id: id ?? this.id,
-      chatId: chatId ?? this.chatId,
-      senderId: senderId ?? this.senderId,
-      senderName: senderName ?? this.senderName,
-      senderAvatar: senderAvatar ?? this.senderAvatar,
-      type: type ?? this.type,
-      content: content ?? this.content,
-      mediaUrl: mediaUrl ?? this.mediaUrl,
-      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
-      fileName: fileName ?? this.fileName,
-      fileSize: fileSize ?? this.fileSize,
-      duration: duration ?? this.duration,
-      replyTo: replyTo ?? this.replyTo,
-      readBy: readBy ?? this.readBy,
-      status: status ?? this.status,
-      createdAt: createdAt ?? this.createdAt,
-      editedAt: editedAt ?? this.editedAt,
-      isDeleted: isDeleted ?? this.isDeleted,
-      metadata: metadata ?? this.metadata,
-    );
+  MessageModel copyWith({String? content, String? mediaUrl, String? thumbnailUrl, MessageStatus? status,
+    List<String>? readBy, bool? isEdited, bool? isDeleted, DateTime? editedAt}) {
+    return MessageModel(id: id, chatId: chatId, senderId: senderId, senderName: senderName, senderAvatar: senderAvatar,
+      type: type, content: content ?? this.content, mediaUrl: mediaUrl ?? this.mediaUrl,
+      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl, fileName: fileName, fileSize: fileSize, duration: duration,
+      replyTo: replyTo, readBy: readBy ?? this.readBy, status: status ?? this.status, createdAt: createdAt,
+      editedAt: editedAt ?? this.editedAt, isEdited: isEdited ?? this.isEdited, isDeleted: isDeleted ?? this.isDeleted);
   }
 
-  bool get isMedia => type == MessageType.image || type == MessageType.video || 
-                       type == MessageType.audio || type == MessageType.voice ||
-                       type == MessageType.file;
-
-  /// Get preview text for chat list
   String getPreviewText() {
     if (isDeleted) return 'Сообщение удалено';
     switch (type) {
-      case MessageType.image:
-        return '🖼 Фото';
-      case MessageType.video:
-        return '🎬 Видео';
-      case MessageType.audio:
-        return '🎵 Аудио';
-      case MessageType.voice:
-        return '🎤 Голосовое сообщение';
-      case MessageType.file:
-        return '📎 ${fileName ?? "Файл"}';
-      case MessageType.text:
-      default:
-        return content ?? '';
+      case MessageType.text: return content ?? '';
+      case MessageType.image: return '📷 Фото';
+      case MessageType.video: return '🎬 Видео';
+      case MessageType.voice: return '🎤 Голосовое сообщение';
+      case MessageType.audio: return '🎵 Аудио';
+      case MessageType.file: return '📎 ${fileName ?? "Файл"}';
     }
   }
 
-  @override
-  List<Object?> get props => [id, chatId, senderId, type, content, status, createdAt];
-
-  static MessageType _parseMessageType(String? type) {
-    switch (type?.toLowerCase()) {
+  static MessageType _parseMessageType(String type) {
+    switch (type.toLowerCase()) {
       case 'image': return MessageType.image;
       case 'video': return MessageType.video;
-      case 'audio': return MessageType.audio;
       case 'voice': return MessageType.voice;
+      case 'audio': return MessageType.audio;
       case 'file': return MessageType.file;
       default: return MessageType.text;
     }
   }
 
-  static MessageStatus _parseMessageStatus(String? status) {
-    switch (status?.toLowerCase()) {
+  static MessageStatus _parseMessageStatus(String status) {
+    switch (status.toLowerCase()) {
       case 'sending': return MessageStatus.sending;
+      case 'sent': return MessageStatus.sent;
       case 'delivered': return MessageStatus.delivered;
       case 'read': return MessageStatus.read;
       case 'failed': return MessageStatus.failed;
@@ -221,226 +215,6 @@ class MessageModel extends Equatable {
     }
   }
 
-  static DateTime _parseDateTime(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is DateTime) return value;
-    return DateTime.tryParse(value.toString()) ?? DateTime.now();
-  }
-}
-
-// ============================================================================
-// CHAT PARTICIPANT MODEL
-// ============================================================================
-
-class ChatParticipant extends Equatable {
-  final String id;
-  final String name;
-  final String? phone;
-  final String? avatarUrl;
-  final String role; // 'admin', 'member'
-  final bool isOnline;
-  final DateTime? lastSeen;
-
-  const ChatParticipant({
-    required this.id,
-    required this.name,
-    this.phone,
-    this.avatarUrl,
-    this.role = 'member',
-    this.isOnline = false,
-    this.lastSeen,
-  });
-
-  factory ChatParticipant.fromJson(Map<String, dynamic> json) {
-    return ChatParticipant(
-      id: json['id'] ?? json['userId'] ?? json['user_id'] ?? '',
-      name: json['name'] ?? json['displayName'] ?? 'Неизвестный',
-      phone: json['phone'],
-      avatarUrl: json['avatarUrl'] ?? json['avatar_url'],
-      role: json['role'] ?? 'member',
-      isOnline: json['isOnline'] ?? json['is_online'] ?? false,
-      lastSeen: json['lastSeen'] != null || json['last_seen'] != null
-          ? DateTime.tryParse((json['lastSeen'] ?? json['last_seen']).toString())
-          : null,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'phone': phone,
-    'avatarUrl': avatarUrl,
-    'role': role,
-    'isOnline': isOnline,
-    'lastSeen': lastSeen?.toIso8601String(),
-  };
-
   @override
-  List<Object?> get props => [id, name, role, isOnline];
-}
-
-// ============================================================================
-// CHAT MODEL
-// ============================================================================
-
-enum ChatType { direct, group }
-
-class ChatModel extends Equatable {
-  final String id;
-  final ChatType type;
-  final String? name;
-  final String? description;
-  final String? avatarUrl;
-  final List<ChatParticipant> participants;
-  final MessageModel? lastMessage;
-  final int unreadCount;
-  final bool isMuted;
-  final bool isPinned;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
-  const ChatModel({
-    required this.id,
-    required this.type,
-    this.name,
-    this.description,
-    this.avatarUrl,
-    this.participants = const [],
-    this.lastMessage,
-    this.unreadCount = 0,
-    this.isMuted = false,
-    this.isPinned = false,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-
-  factory ChatModel.fromJson(Map<String, dynamic> json) {
-    // Parse participants from either 'participants' or 'members'
-    final participantsList = json['participants'] ?? json['members'] ?? [];
-    
-    return ChatModel(
-      id: json['id'] ?? json['_id'] ?? '',
-      type: (json['type'] ?? 'direct') == 'group' ? ChatType.group : ChatType.direct,
-      name: json['name'],
-      description: json['description'],
-      avatarUrl: json['avatarUrl'] ?? json['avatar_url'],
-      participants: (participantsList as List<dynamic>)
-          .map((p) => ChatParticipant.fromJson(p as Map<String, dynamic>))
-          .toList(),
-      lastMessage: json['lastMessage'] != null || json['last_message'] != null
-          ? MessageModel.fromJson(json['lastMessage'] ?? json['last_message'])
-          : null,
-      unreadCount: json['unreadCount'] ?? json['unread_count'] ?? 0,
-      isMuted: json['isMuted'] ?? json['is_muted'] ?? false,
-      isPinned: json['isPinned'] ?? json['is_pinned'] ?? false,
-      createdAt: DateTime.tryParse((json['createdAt'] ?? json['created_at'] ?? '').toString()) ?? DateTime.now(),
-      updatedAt: DateTime.tryParse((json['updatedAt'] ?? json['updated_at'] ?? '').toString()) ?? DateTime.now(),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'type': type == ChatType.group ? 'group' : 'direct',
-    'name': name,
-    'description': description,
-    'avatarUrl': avatarUrl,
-    'participants': participants.map((p) => p.toJson()).toList(),
-    'lastMessage': lastMessage?.toJson(),
-    'unreadCount': unreadCount,
-    'isMuted': isMuted,
-    'isPinned': isPinned,
-    'createdAt': createdAt.toIso8601String(),
-    'updatedAt': updatedAt.toIso8601String(),
-  };
-
-  /// Get display name for chat
-  /// For direct chats - returns other participant's name
-  /// For group chats - returns group name
-  String getDisplayName(String currentUserId) {
-    if (type == ChatType.group) {
-      return name ?? 'Группа';
-    }
-    
-    if (participants.isEmpty) {
-      return name ?? 'Чат';
-    }
-    
-    final otherParticipant = participants.firstWhere(
-      (p) => p.id != currentUserId,
-      orElse: () => participants.first,
-    );
-    
-    return otherParticipant.name.isNotEmpty 
-        ? otherParticipant.name 
-        : otherParticipant.phone ?? 'Неизвестный';
-  }
-
-  /// Get display avatar for chat
-  String? getDisplayAvatar(String currentUserId) {
-    if (type == ChatType.group) {
-      return avatarUrl;
-    }
-    
-    if (participants.isEmpty) {
-      return avatarUrl;
-    }
-    
-    final otherParticipant = participants.firstWhere(
-      (p) => p.id != currentUserId,
-      orElse: () => participants.first,
-    );
-    
-    return otherParticipant.avatarUrl;
-  }
-
-  /// Get other participant for direct chats
-  ChatParticipant? getOtherParticipant(String currentUserId) {
-    if (type == ChatType.group || participants.isEmpty) {
-      return null;
-    }
-    
-    return participants.firstWhere(
-      (p) => p.id != currentUserId,
-      orElse: () => participants.first,
-    );
-  }
-
-  /// Check if other user is online (for direct chats)
-  bool isOtherOnline(String currentUserId) {
-    final other = getOtherParticipant(currentUserId);
-    return other?.isOnline ?? false;
-  }
-
-  ChatModel copyWith({
-    String? id,
-    ChatType? type,
-    String? name,
-    String? description,
-    String? avatarUrl,
-    List<ChatParticipant>? participants,
-    MessageModel? lastMessage,
-    int? unreadCount,
-    bool? isMuted,
-    bool? isPinned,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return ChatModel(
-      id: id ?? this.id,
-      type: type ?? this.type,
-      name: name ?? this.name,
-      description: description ?? this.description,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
-      participants: participants ?? this.participants,
-      lastMessage: lastMessage ?? this.lastMessage,
-      unreadCount: unreadCount ?? this.unreadCount,
-      isMuted: isMuted ?? this.isMuted,
-      isPinned: isPinned ?? this.isPinned,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-
-  @override
-  List<Object?> get props => [id, type, name, participants, lastMessage, unreadCount, updatedAt];
+  List<Object?> get props => [id, status, isDeleted, readBy, isEdited];
 }
