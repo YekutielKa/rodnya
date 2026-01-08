@@ -10,7 +10,7 @@ import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/chats/presentation/screens/chats_list_screen.dart';
 import '../../features/chats/presentation/screens/chat_screen.dart';
 import '../../features/contacts/presentation/screens/contacts_screen.dart';
-import '../../features/calls/presentation/screens/calls_history_screen.dart';
+import '../../features/calls/presentation/screens/calls_screen.dart';
 import '../../features/calls/presentation/screens/call_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/settings/presentation/screens/profile_screen.dart';
@@ -100,7 +100,7 @@ final appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.calls,
           pageBuilder: (context, state) => const NoTransitionPage(
-            child: CallsHistoryScreen(),
+            child: CallsScreen(),
           ),
         ),
         GoRoute(
