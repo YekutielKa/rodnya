@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/theme.dart';
 import '../../../../core/api/api_client.dart';
 import '../../data/models/contact_model.dart';
+import '../../../calls/call_manager.dart';
 
 class ContactsScreen extends StatefulWidget {
   const ContactsScreen({super.key});
@@ -80,54 +81,14 @@ class _ContactsScreenState extends State<ContactsScreen> {
     }
   }
 
-  Future<void> _startCall(ContactModel contact, bool isVideo) async {
-    try {
-      final apiClient = ApiClient();
-      
-      // First create/get chat
-      final chatResponse = await apiClient.post('/chats/direct', data: {
-        'userId': contact.userId,
-      });
 
-      if (chatResponse.data['success'] != true) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ошибка создания чата')),
-          );
-        }
-        return;
-      }
-
-      final chatId = chatResponse.data['data']['chatId'];
-
-      // Then initiate call
-      final callResponse = await apiClient.post('/calls/initiate', data: {
-        'chatId': chatId,
-        'type': isVideo ? 'video' : 'audio',
-      });
-
-      if (callResponse.data['success'] == true && callResponse.data['data'] != null) {
-        final callId = callResponse.data['data']['callId'];
-        if (mounted) {
-          context.push('/call/$callId', extra: {
-            'isVideo': isVideo,
-            'isIncoming': false,
-          });
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(callResponse.data['message'] ?? 'Ошибка звонка')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e')),
-        );
-      }
-    }
+  void _startCall(ContactModel contact, bool isVideo) {
+    CallManager.instance.initiateCall(
+      recipientId: contact.userId,
+      recipientName: contact.name ?? contact.phone,
+      recipientAvatar: contact.avatarUrl,
+      isVideo: isVideo,
+    );
   }
 
   void _showContactOptions(ContactModel contact) {
