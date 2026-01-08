@@ -263,13 +263,6 @@ module.exports = {
   getAllUsers,
   getMe,
   updateProfile,
-  updatePrivacy,
-  getUserById,
-  getDevices,
-  revokeDevice,
-  updatePushToken,
-  deleteAccount
-};
 
 // Get all users (for family app)
 const getAllUsers = async (req, res) => {
@@ -298,4 +291,16 @@ const getAllUsers = async (req, res) => {
     logger.error('Get all users error:', error);
     return ApiResponse.serverError(res);
   }
+};
+
+module.exports = {
+  getAllUsers,
+  getMe,
+  updateProfile,
+  updatePrivacy,
+  getUserById,
+  getDevices,
+  revokeDevice,
+  updatePushToken,
+  deleteAccount
 };
