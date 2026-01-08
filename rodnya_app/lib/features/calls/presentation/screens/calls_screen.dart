@@ -7,14 +7,14 @@ class CallRecord {
   final String userId;
   final String name;
   final String? avatarUrl;
-  final String type; // 'incoming', 'outgoing', 'missed'
-  final String callType; // 'audio', 'video'
+  final String type;
+  final String callType;
   final DateTime createdAt;
   final int? duration;
 
   CallRecord({
     required this.id,
-    required this.odanya userId,
+    required this.userId,
     required this.name,
     this.avatarUrl,
     required this.type,
@@ -47,7 +47,6 @@ class CallsScreen extends StatefulWidget {
 class _CallsScreenState extends State<CallsScreen> {
   List<CallRecord> _calls = [];
   bool _isLoading = true;
-  String? _error;
 
   @override
   void initState() {
@@ -57,10 +56,7 @@ class _CallsScreenState extends State<CallsScreen> {
 
   Future<void> _loadCalls() async {
     try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
+      setState(() => _isLoading = true);
 
       final apiClient = ApiClient();
       final response = await apiClient.get('/calls/history');
@@ -81,7 +77,6 @@ class _CallsScreenState extends State<CallsScreen> {
       setState(() {
         _calls = [];
         _isLoading = false;
-        // Не показываем ошибку - просто пустой список
       });
     }
   }
@@ -99,20 +94,13 @@ class _CallsScreenState extends State<CallsScreen> {
   }
 
   IconData _getCallIcon(CallRecord call) {
-    if (call.type == 'missed') {
-      return Icons.call_missed;
-    } else if (call.type == 'incoming') {
-      return Icons.call_received;
-    } else {
-      return Icons.call_made;
-    }
+    if (call.type == 'missed') return Icons.call_missed;
+    if (call.type == 'incoming') return Icons.call_received;
+    return Icons.call_made;
   }
 
   Color _getCallIconColor(CallRecord call) {
-    if (call.type == 'missed') {
-      return Colors.red;
-    }
-    return Colors.green;
+    return call.type == 'missed' ? Colors.red : Colors.green;
   }
 
   @override
@@ -130,15 +118,9 @@ class _CallsScreenState extends State<CallsScreen> {
                     children: [
                       Icon(Icons.phone_outlined, size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
-                      Text(
-                        'Нет звонков',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                      ),
+                      Text('Нет звонков', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
                       const SizedBox(height: 8),
-                      Text(
-                        'История звонков появится здесь',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      ),
+                      Text('История звонков появится здесь', style: TextStyle(color: Colors.grey[400], fontSize: 14)),
                     ],
                   ),
                 )
@@ -151,53 +133,28 @@ class _CallsScreenState extends State<CallsScreen> {
                       return ListTile(
                         leading: CircleAvatar(
                           backgroundColor: AppColors.primary.withOpacity(0.1),
-                          backgroundImage: call.avatarUrl != null
-                              ? NetworkImage(call.avatarUrl!)
-                              : null,
+                          backgroundImage: call.avatarUrl != null ? NetworkImage(call.avatarUrl!) : null,
                           child: call.avatarUrl == null
-                              ? Text(
-                                  call.name.isNotEmpty ? call.name[0].toUpperCase() : '?',
-                                  style: const TextStyle(color: AppColors.primary),
-                                )
+                              ? Text(call.name.isNotEmpty ? call.name[0].toUpperCase() : '?',
+                                  style: const TextStyle(color: AppColors.primary))
                               : null,
                         ),
-                        title: Text(
-                          call.name,
-                          style: TextStyle(
-                            color: call.type == 'missed' ? Colors.red : null,
-                          ),
-                        ),
+                        title: Text(call.name, style: TextStyle(color: call.type == 'missed' ? Colors.red : null)),
                         subtitle: Row(
                           children: [
-                            Icon(
-                              _getCallIcon(call),
-                              size: 16,
-                              color: _getCallIconColor(call),
-                            ),
+                            Icon(_getCallIcon(call), size: 16, color: _getCallIconColor(call)),
                             const SizedBox(width: 4),
                             Text(
-                              call.type == 'missed'
-                                  ? 'Пропущенный'
-                                  : call.type == 'incoming'
-                                      ? 'Входящий'
-                                      : 'Исходящий',
+                              call.type == 'missed' ? 'Пропущенный' : call.type == 'incoming' ? 'Входящий' : 'Исходящий',
                               style: TextStyle(color: Colors.grey[600], fontSize: 13),
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              _getCallTimeText(call.createdAt),
-                              style: TextStyle(color: Colors.grey[400], fontSize: 13),
-                            ),
+                            Text(_getCallTimeText(call.createdAt), style: TextStyle(color: Colors.grey[400], fontSize: 13)),
                           ],
                         ),
                         trailing: IconButton(
-                          icon: Icon(
-                            call.callType == 'video' ? Icons.videocam : Icons.phone,
-                            color: AppColors.primary,
-                          ),
-                          onPressed: () {
-                            // TODO: Start call
-                          },
+                          icon: Icon(call.callType == 'video' ? Icons.videocam : Icons.phone, color: AppColors.primary),
+                          onPressed: () {},
                         ),
                       );
                     },
