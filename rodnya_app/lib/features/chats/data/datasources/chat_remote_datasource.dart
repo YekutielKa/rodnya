@@ -9,7 +9,7 @@ class ChatRemoteDatasource {
   Future<List<ChatModel>> getChats({int page = 1, int limit = 20}) async {
     try {
       final response = await _dio.get('/chats', queryParameters: {
-        'page': page,
+        
         'limit': limit,
       });
       
@@ -88,7 +88,7 @@ class ChatRemoteDatasource {
   }) async {
     try {
       final Map<String, dynamic> queryParams = {
-        'page': page,
+        
         'limit': limit,
       };
       if (before != null) {
@@ -96,13 +96,13 @@ class ChatRemoteDatasource {
       }
 
       final response = await _dio.get(
-        '/chats/$chatId/messages',
+        '/messages/chat/$chatId',
         queryParameters: queryParams,
       );
       
       final data = response.data;
       if (data['success'] == true && data['data'] != null) {
-        final messages = (data['data']['messages'] as List<dynamic>?) ?? [];
+        final messages = (data['data'] as List<dynamic>?) ?? [];
         return messages.map((m) => MessageModel.fromJson(m)).toList();
       }
       return [];
@@ -123,7 +123,7 @@ class ChatRemoteDatasource {
     String? replyToId,
   }) async {
     try {
-      final response = await _dio.post('/chats/$chatId/messages', data: {
+      final response = await _dio.post('/messages/chat/$chatId', data: {
         'type': type,
         'content': content,
         'mediaUrl': mediaUrl,
@@ -154,7 +154,7 @@ class ChatRemoteDatasource {
 
   Future<void> deleteMessage(String chatId, String messageId) async {
     try {
-      await _dio.delete('/chats/$chatId/messages/$messageId');
+      await _dio.delete('/messages/$messageId/chat/$chatId');
     } catch (e) {
       print('Error deleting message: $e');
       rethrow;

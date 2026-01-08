@@ -60,7 +60,7 @@ class _ChatScreenState extends State<ChatScreen> {
           if (state.chat.type == 'direct') {
             final otherUser = state.chat.participants.firstWhere(
               (p) => p.userId != '', // TODO: compare with currentUserId
-              orElse: () => state.chat.participants.first,
+              orElse: () => ChatParticipant(userId: '', name: 'Неизвестный', isOnline: false),
             );
             subtitle = otherUser.isOnline ? 'в сети' : null;
           } else {

@@ -70,7 +70,7 @@ const getMessages = async (req, res) => {
       createdAt: m.created_at
     }));
 
-    return ApiResponse.success(res, messages.reverse());
+    return ApiResponse.success(res, messages);
 
   } catch (error) {
     logger.error('Get messages error:', error);
