@@ -177,6 +177,26 @@ class MessageModel extends Equatable {
                        type == MessageType.audio || type == MessageType.voice ||
                        type == MessageType.file;
 
+  /// Get preview text for chat list
+  String getPreviewText() {
+    if (isDeleted) return 'Сообщение удалено';
+    switch (type) {
+      case MessageType.image:
+        return '🖼 Фото';
+      case MessageType.video:
+        return '🎬 Видео';
+      case MessageType.audio:
+        return '🎵 Аудио';
+      case MessageType.voice:
+        return '🎤 Голосовое сообщение';
+      case MessageType.file:
+        return '📎 ${fileName ?? "Файл"}';
+      case MessageType.text:
+      default:
+        return content ?? '';
+    }
+  }
+
   @override
   List<Object?> get props => [id, chatId, senderId, type, content, status, createdAt];
 

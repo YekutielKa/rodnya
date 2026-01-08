@@ -74,9 +74,9 @@ class SendVoiceMessage extends ChatEvent {
   List<Object?> get props => [audioUrl, duration, replyToId];
 }
 
-class MessageReceived extends ChatEvent {
+class ChatMessageReceived extends ChatEvent {
   final MessageModel message;
-  const MessageReceived(this.message);
+  const ChatMessageReceived(this.message);
   @override
   List<Object?> get props => [message];
 }
@@ -223,29 +223,23 @@ class ChatError extends ChatState {
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final ChatRemoteDatasource _datasource;
-  final String _currentUserId;
-  final String? _currentUserName;
-  
   String? _currentChatId;
+  String _currentUserId = '';
+  String? _currentUserName;
   final _uuid = const Uuid();
   
   // For typing indicator debounce
   Timer? _typingTimer;
   
-  ChatBloc({
-    required ChatRemoteDatasource datasource,
-    required String currentUserId,
-    String? currentUserName,
-  }) : _datasource = datasource,
-       _currentUserId = currentUserId,
-       _currentUserName = currentUserName,
-       super(const ChatInitial()) {
+  ChatBloc(ChatRemoteDatasource datasource) 
+      : _datasource = datasource,
+        super(const ChatInitial()) {
     on<LoadChat>(_onLoadChat);
     on<LoadMoreMessages>(_onLoadMoreMessages);
     on<SendTextMessage>(_onSendTextMessage);
     on<SendMediaMessage>(_onSendMediaMessage);
     on<SendVoiceMessage>(_onSendVoiceMessage);
-    on<MessageReceived>(_onMessageReceived);
+    on<ChatMessageReceived>(_onMessageReceived);
     on<MessageUpdated>(_onMessageUpdated);
     on<MessageDeleted>(_onMessageDeleted);
     on<DeleteMessage>(_onDeleteMessage);
@@ -488,7 +482,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
 
-  void _onMessageReceived(MessageReceived event, Emitter<ChatState> emit) {
+  void _onMessageReceived(ChatMessageReceived event, Emitter<ChatState> emit) {
     final currentState = state;
     if (currentState is! ChatLoaded) return;
     

@@ -9,12 +9,11 @@ const { messageLimiter } = require('../middleware/rateLimiter');
 
 router.use(authenticate);
 
-// Search messages
-router.get('/search', [
+// Search messages in chat
+router.get('/chat/:chatId/search', [
+  param('chatId').isUUID(),
   queryValidator('q').trim().isLength({ min: 2 }),
-  queryValidator('chatId').optional().isUUID(),
-  queryValidator('limit').optional().isInt({ min: 1, max: 50 }),
-  queryValidator('offset').optional().isInt({ min: 0 })
+  queryValidator('limit').optional().isInt({ min: 1, max: 50 })
 ], validate, messageController.searchMessages);
 
 // Get messages for chat

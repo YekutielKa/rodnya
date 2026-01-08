@@ -184,13 +184,13 @@ class _RodnyaAppState extends State<RodnyaApp> {
         ),
       ],
       child: BlocListener<AuthBloc, AuthState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is AuthAuthenticated) {
-            widget.socketService.connect(state.user.id);
+            await widget.socketService.connect(state.user.id);
             
             widget.socketService.onNewMessage((message) {
               context.read<ChatsBloc>().add(MessageReceived(message));
-              context.read<ChatBloc>().add(MessageReceivedInChat(message));
+              context.read<ChatBloc>().add(ChatMessageReceived(message));
             });
           } else if (state is AuthUnauthenticated) {
             widget.socketService.disconnect();

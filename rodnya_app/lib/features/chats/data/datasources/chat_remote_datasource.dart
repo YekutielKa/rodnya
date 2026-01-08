@@ -11,8 +11,8 @@ class ChatRemoteDatasource {
   // ============================================================================
 
   /// Get all chats for current user
-  Future<List<ChatModel>> getChats() async {
-    final response = await _dio.get('/chats');
+  Future<List<ChatModel>> getChats({int page = 1}) async {
+    final response = await _dio.get('/chats', queryParameters: {'page': page});
     final data = response.data['data'] as List<dynamic>;
     return data.map((json) => ChatModel.fromJson(json)).toList();
   }
@@ -34,16 +34,22 @@ class ChatRemoteDatasource {
     };
   }
 
+  /// Create direct chat (alias for getOrCreateDirectChat)
+  Future<ChatModel> createDirectChat(String otherUserId) async {
+    final result = await getOrCreateDirectChat(otherUserId);
+    return getChat(result['chatId']);
+  }
+
   /// Create group chat
   Future<ChatModel> createGroupChat({
     required String name,
-    required List<String> memberIds,
+    required List<String> participantIds,
     String? description,
     String? avatarUrl,
   }) async {
     final response = await _dio.post('/chats/group', data: {
       'name': name,
-      'memberIds': memberIds,
+      'memberIds': participantIds,
       'description': description,
       'avatarUrl': avatarUrl,
     });

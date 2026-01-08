@@ -1,7 +1,7 @@
 const { query } = require('../config/database');
-const logger = require('../config/logger');
-const ApiResponse = require('../utils/apiResponse');
-const { getIO } = require('../config/socket');
+const logger = require('../utils/logger');
+const ApiResponse = require('../utils/response');
+const { getIO } = require('../websocket');
 
 // Get messages with pagination
 const getMessages = async (req, res) => {

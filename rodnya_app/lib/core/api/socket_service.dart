@@ -1,25 +1,30 @@
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/app_config.dart';
 import '../../features/chats/data/models/chat_model.dart';
 
 class SocketService {
   io.Socket? _socket;
   String? _userId;
+  final _storage = const FlutterSecureStorage();
   
   final List<Function(MessageModel)> _messageListeners = [];
   final List<Function(String visitorId, bool isTyping)> _typingListeners = [];
   final List<Function(String visitorId, bool isOnline)> _presenceListeners = [];
   final List<Function(Map<String, dynamic>)> _callListeners = [];
 
-  void connect(String userId) {
+  Future<void> connect(String userId) async {
     _userId = userId;
+    
+    // Get access token for authentication
+    final token = await _storage.read(key: 'access_token');
     
     _socket = io.io(
       AppConfig.wsUrl,
       io.OptionBuilder()
           .setTransports(['websocket'])
           .enableAutoConnect()
-          .setQuery({'userId': userId})
+          .setAuth({'token': token})
           .build(),
     );
 

@@ -313,6 +313,22 @@ const migrations = [
         FOR EACH ROW
         EXECUTE FUNCTION increment_unread_count();
     `
+  },
+  {
+    name: '003_add_media_fields_to_messages',
+    up: `
+      -- Add media fields to messages table
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS media_url TEXT;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS thumbnail_url TEXT;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_name VARCHAR(255);
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_size BIGINT;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS duration INTEGER;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_by UUID[] DEFAULT ARRAY[]::UUID[];
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'sent' CHECK (status IN ('sent', 'delivered', 'read'));
+      
+      -- Add index for media messages
+      CREATE INDEX IF NOT EXISTS idx_messages_media ON messages(chat_id, type) WHERE type IN ('image', 'video', 'voice', 'file');
+    `
   }
 ];
 
