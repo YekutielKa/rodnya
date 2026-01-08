@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "911771181526",
+    "project_id": "rodnya-b71cb",
+    "storage_bucket": "rodnya-b71cb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:911771181526:android:2bb2e974c4940281a58477",
+        "android_client_info": {
+          "package_name": "com.rodnya.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzH3lBVqf9ql1fcB28M0KUjhnFkuMSFnI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
