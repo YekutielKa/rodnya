@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rodnya - Семейный мессенджер</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 24px;
+            padding: 48px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 48px;
+        }
+        h1 { color: #1a1a2e; margin-bottom: 8px; font-size: 32px; }
+        .subtitle { color: #666; margin-bottom: 32px; font-size: 16px; }
+        .download-btn {
+            display: block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        .download-btn.disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .download-btn.disabled:hover { transform: none; box-shadow: none; }
+        .version { color: #999; font-size: 14px; margin-top: 24px; }
+        .features {
+            text-align: left;
+            margin: 32px 0;
+            padding: 24px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        .features h3 { color: #333; margin-bottom: 16px; font-size: 16px; }
+        .features ul { list-style: none; }
+        .features li {
+            padding: 8px 0;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .features li::before { content: "✓"; color: #667eea; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">👨‍👩‍👧‍👦</div>
+        <h1>Rodnya</h1>
+        <p class="subtitle">Семейный мессенджер для самых близких</p>
+        <div class="features">
+            <h3>Возможности:</h3>
+            <ul>
+                <li>Безопасные чаты</li>
+                <li>Голосовые и видеозвонки</li>
+                <li>Обмен фото и видео</li>
+                <li>Голосовые сообщения</li>
+                <li>Только для семьи — по приглашениям</li>
+            </ul>
+        </div>
+        <a href="https://github.com/YekutielKa/rodnya/releases/latest/download/rodnya-v1.0.0.apk" class="download-btn">📱 Скачать для Android</a>
+        <a href="#" class="download-btn disabled">🍎 iOS — скоро</a>
+        <p class="version">Версия 1.0.0</p>
+    </div>
+</body>
+</html>
