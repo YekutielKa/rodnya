@@ -28,7 +28,7 @@ const registerValidator = [
     .matches(phoneRegex).withMessage('Invalid phone number format'),
   body('name').optional()
     .trim()
-    .notEmpty().withMessage('Name is required')
+    
     .isLength({ min: 2, max: 100 }).withMessage('Name must be 2-100 characters'),
   body('inviteCode')
     .optional()
