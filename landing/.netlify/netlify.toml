@@ -7,8 +7,9 @@ redirects = []
 [functions."*"]
 
 [build]
-publish = "/home/yekutiel/projects/rodnya/docs"
+publish = "/home/yekutiel/projects/rodnya/landing/docs"
 publishOrigin = "ui"
+base = "/home/yekutiel/projects/rodnya/landing"
 
 [build.environment]
 

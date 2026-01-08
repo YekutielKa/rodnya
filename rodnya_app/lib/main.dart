@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/api/api_client.dart';
 import 'core/api/socket_service.dart';
-import 'core/api/push_notification_service.dart';
 import 'core/config/theme.dart';
 import 'core/widgets/main_scaffold.dart';
 
@@ -33,13 +30,6 @@ import 'features/calls/presentation/screens/call_screen.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/settings/presentation/screens/profile_screen.dart';
 
-// Background message handler - must be top-level function
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  print('Background message: ${message.messageId}');
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -48,69 +38,59 @@ void main() async {
   await Hive.openBox('auth');
   await Hive.openBox('settings');
 
-  // Initialize Firebase
-  await Firebase.initializeApp();
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // Initialize services before running app
+  final apiClient = ApiClient();
+  final socketService = SocketService();
+  
+  final authLocalDataSource = AuthLocalDataSource();
+  await authLocalDataSource.init();
+  
+  final authRemoteDataSource = AuthRemoteDataSource(apiClient);
+  
+  final authRepository = AuthRepositoryImpl(
+    remoteDataSource: authRemoteDataSource,
+    localDataSource: authLocalDataSource,
+  );
+  
+  final chatRemoteDatasource = ChatRemoteDatasource(apiClient.dio);
 
-  runApp(const RodnyaApp());
+  runApp(RodnyaApp(
+    apiClient: apiClient,
+    socketService: socketService,
+    authRepository: authRepository,
+    chatRemoteDatasource: chatRemoteDatasource,
+  ));
 }
 
 class RodnyaApp extends StatefulWidget {
-  const RodnyaApp({super.key});
+  final ApiClient apiClient;
+  final SocketService socketService;
+  final AuthRepositoryImpl authRepository;
+  final ChatRemoteDatasource chatRemoteDatasource;
+
+  const RodnyaApp({
+    super.key,
+    required this.apiClient,
+    required this.socketService,
+    required this.authRepository,
+    required this.chatRemoteDatasource,
+  });
 
   @override
   State<RodnyaApp> createState() => _RodnyaAppState();
 }
 
 class _RodnyaAppState extends State<RodnyaApp> {
-  late final ApiClient _apiClient;
-  late final SocketService _socketService;
-  late final PushNotificationService _pushService;
-  late final AuthRepositoryImpl _authRepository;
-  late final ChatRemoteDatasource _chatRemoteDatasource;
-  late final AuthLocalDataSource _authLocalDataSource;
-  
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
-    _initServices();
     _initRouter();
-  }
-
-  Future<void> _initServices() async {
-    _apiClient = ApiClient();
-    _socketService = SocketService();
-    _pushService = PushNotificationService();
-    
-    _authLocalDataSource = AuthLocalDataSource();
-    await _authLocalDataSource.init();
-    
-    final authRemoteDataSource = AuthRemoteDataSource(_apiClient);
-    
-    _authRepository = AuthRepositoryImpl(
-      remoteDataSource: authRemoteDataSource,
-      localDataSource: _authLocalDataSource,
-    );
-    
-    _chatRemoteDatasource = ChatRemoteDatasource(_apiClient.dio);
-    
-    // Initialize push notifications
-    await _pushService.init();
-    
-    // Handle notification tap - navigate to chat
-    _pushService.onNotificationTap = (chatId) {
-      if (chatId != null) {
-        _router.push('/chat/$chatId');
-      }
-    };
   }
 
   void _initRouter() {
     _router = GoRouter(
-      navigatorKey: _navigatorKey,
       initialLocation: '/splash',
       routes: [
         GoRoute(
@@ -185,7 +165,7 @@ class _RodnyaAppState extends State<RodnyaApp> {
 
   @override
   void dispose() {
-    _socketService.disconnect();
+    widget.socketService.disconnect();
     super.dispose();
   }
 
@@ -194,37 +174,26 @@ class _RodnyaAppState extends State<RodnyaApp> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc(authRepository: _authRepository)..add(AuthCheckRequested()),
+          create: (context) => AuthBloc(authRepository: widget.authRepository)..add(AuthCheckRequested()),
         ),
         BlocProvider<ChatsBloc>(
-          create: (context) => ChatsBloc(_chatRemoteDatasource),
+          create: (context) => ChatsBloc(widget.chatRemoteDatasource),
         ),
         BlocProvider<ChatBloc>(
-          create: (context) => ChatBloc(_chatRemoteDatasource),
+          create: (context) => ChatBloc(widget.chatRemoteDatasource),
         ),
       ],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            // Connect socket when authenticated
-            _socketService.connect(state.user.id);
+            widget.socketService.connect(state.user.id);
             
-            // Listen for new messages via socket
-            _socketService.onNewMessage((message) {
+            widget.socketService.onNewMessage((message) {
               context.read<ChatsBloc>().add(MessageReceived(message));
               context.read<ChatBloc>().add(MessageReceivedInChat(message));
             });
-            
-            // Register FCM token on backend
-            _pushService.registerTokenOnBackend((token) async {
-              try {
-                await _apiClient.post('/users/fcm-token', data: {'token': token});
-              } catch (e) {
-                print('Error registering FCM token: $e');
-              }
-            });
           } else if (state is AuthUnauthenticated) {
-            _socketService.disconnect();
+            widget.socketService.disconnect();
           }
         },
         child: MaterialApp.router(
