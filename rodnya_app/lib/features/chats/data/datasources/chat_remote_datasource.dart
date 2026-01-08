@@ -15,7 +15,7 @@ class ChatRemoteDatasource {
       
       final data = response.data;
       if (data['success'] == true && data['data'] != null) {
-        final chats = (data['data']['chats'] as List<dynamic>?) ?? [];
+        final chats = (data['data'] as List<dynamic>?) ?? [];
         return chats.map((c) => ChatModel.fromJson(c)).toList();
       }
       return [];
