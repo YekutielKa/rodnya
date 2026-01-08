@@ -46,3 +46,6 @@ rodnya_app/android/app/debug/
 rodnya_app/android/app/profile/
 rodnya_app/android/app/release/
 *.apk
+
+# Local Netlify folder
+.netlify
