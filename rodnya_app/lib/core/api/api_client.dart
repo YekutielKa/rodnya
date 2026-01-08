@@ -10,6 +10,9 @@ class ApiClient {
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
 
+  // Getter for direct Dio access
+  Dio get dio => _dio;
+
   ApiClient() {
     _dio = Dio(BaseOptions(
       baseUrl: AppConfig.apiBaseUrl,
