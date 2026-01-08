@@ -18,7 +18,7 @@ class AuthRemoteDataSource {
     }
     return {
       'deviceId': 'mobile-${DateTime.now().millisecondsSinceEpoch}',
-      'deviceType': 'mobile',
+      'deviceType': 'android',
       'deviceName': 'Mobile Device',
     };
   }

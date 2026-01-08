@@ -168,17 +168,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final result = await authRepository.verifyOtp(event.phone, event.code);
+      await authRepository.verifyOtp(event.phone, event.code);
       
-      if (result['isNewUser'] == true) {
-        emit(AuthOtpVerified(
+      // Try login first
+      try {
+        final user = await authRepository.login(event.phone);
+        emit(AuthAuthenticated(user));
+      } catch (loginError) {
+        // User doesn't exist - auto register with phone as name
+        final user = await authRepository.register(
           phone: event.phone,
-          isNewUser: true,
-        ));
-      } else {
-        // Existing user - auto login
-        final loginResult = await authRepository.login(event.phone);
-        emit(AuthAuthenticated(loginResult));
+          name: event.phone,
+        );
+        emit(AuthAuthenticated(user));
       }
     } catch (e) {
       emit(AuthError(e.toString()));
