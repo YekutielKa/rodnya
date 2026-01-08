@@ -3,6 +3,35 @@ const { cache } = require('../config/redis');
 const ApiResponse = require('../utils/response');
 const logger = require('../utils/logger');
 
+// Get all users (for family app)
+const getAllUsers = async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT id, phone, name, avatar_url, status, is_online, last_seen 
+       FROM users 
+       WHERE id != $1
+       ORDER BY name ASC`,
+      [req.user.id]
+    );
+
+    const users = result.rows.map(u => ({
+      id: u.id,
+      userId: u.id,
+      phone: u.phone,
+      name: u.name,
+      avatarUrl: u.avatar_url,
+      status: u.status,
+      isOnline: u.is_online,
+      lastSeen: u.last_seen
+    }));
+
+    return ApiResponse.success(res, users);
+  } catch (error) {
+    logger.error('Get all users error:', error);
+    return ApiResponse.serverError(res);
+  }
+};
+
 // Get current user profile
 const getMe = async (req, res) => {
   try {
@@ -255,40 +284,6 @@ const deleteAccount = async (req, res) => {
 
   } catch (error) {
     logger.error('Delete account error:', error);
-    return ApiResponse.serverError(res);
-  }
-};
-
-module.exports = {
-  getAllUsers,
-  getMe,
-  updateProfile,
-
-// Get all users (for family app)
-const getAllUsers = async (req, res) => {
-  try {
-    const result = await query(
-      `SELECT id, phone, name, avatar_url, status, is_online, last_seen 
-       FROM users 
-       WHERE id != $1
-       ORDER BY name ASC`,
-      [req.user.id]
-    );
-
-    const users = result.rows.map(u => ({
-      id: u.id,
-      userId: u.id,
-      phone: u.phone,
-      name: u.name,
-      avatarUrl: u.avatar_url,
-      status: u.status,
-      isOnline: u.is_online,
-      lastSeen: u.last_seen
-    }));
-
-    return ApiResponse.success(res, users);
-  } catch (error) {
-    logger.error('Get all users error:', error);
     return ApiResponse.serverError(res);
   }
 };
