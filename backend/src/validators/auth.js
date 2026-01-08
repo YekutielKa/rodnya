@@ -29,7 +29,7 @@ const registerValidator = [
   body('name').optional()
     .trim()
     
-    .isLength({ min: 2, max: 100 }).withMessage('Name must be 2-100 characters'),
+    .isLength({ max: 100 }).withMessage('Name must be 2-100 characters'),
   body('inviteCode')
     .optional()
     .trim()
